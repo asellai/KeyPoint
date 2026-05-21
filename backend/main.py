@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, UploadFile, File, Form,Request
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import json
@@ -25,7 +25,6 @@ app.add_middleware(
     allow_headers=["*"],  
 )
 
-# model = "mistral"
 model = "openrouter/free"
 
 class RequestData(BaseModel):
@@ -33,8 +32,8 @@ class RequestData(BaseModel):
 
 
 def clean_text(text):
-    text = re.sub(r'\s+', ' ', text)  # Replace multiple spaces/newlines with a single space
-    text = text.strip()  # Remove leading/trailing spaces
+    text = re.sub(r'\s+', ' ', text)
+    text = text.strip()
     return text
 
 def format_text(text):
@@ -42,30 +41,57 @@ def format_text(text):
     formatted_text = []
     for line in lines:
         line = line.strip()
-        if line.startswith("•") or line.startswith("-"):  # Bullet points
+        if line.startswith("•") or line.startswith("-"):
             formatted_text.append(f"\n- {line[1:].strip()}")
-        elif line.isupper():  # Assuming uppercase lines are headings
+        elif line.isupper():
             formatted_text.append(f"\n\n{line}\n{'=' * len(line)}")
         else:
             formatted_text.append(line)
     return " ".join(formatted_text)
 
 async def extract_text_from_pdf(file: UploadFile):
-    file_content = await file.read()  # Read file content
+    file_content = await file.read()
     try:
-        doc = fitz.open(stream=file_content, filetype="pdf")  # Open PDF
-        text = "\n".join([page.get_text("text") for page in doc])  # Extract text
-        formatted_text = clean_text(text)  # Apply text cleaning
+        doc = fitz.open(stream=file_content, filetype="pdf")
+        text = "\n".join([page.get_text("text") for page in doc])
+        formatted_text = clean_text(text)
         formatted_text = format_text(formatted_text) 
         return formatted_text
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error extracting text: {str(e)}")
 
 
+async def generate_summary(text: str) -> str:
+    """Генерирует краткое содержание документа"""
+    summary_prompt = f"""Summarize the following text in 3-5 sentences. 
+    The summary should be clear, concise and cover the main topics.
+    Respond with ONLY the summary text, no additional formatting.
+    
+    Text: {text[:3000]}"""  # берём первые 3000 символов чтобы не превышать лимит
+
+    try:
+        response = client.chat.completions.create(
+            model=model,
+            messages=[{"role": "user", "content": summary_prompt}],
+            temperature=0.3,
+            extra_headers={
+                "HTTP-Referer": "http://localhost:3000",
+                "X-Title": "MCQ Generator App",
+            },
+        )
+        return response.choices[0].message.content.strip()
+    except Exception:
+        return "Summary not available."
+
+
 @app.post("/upload")
-async def upload_file(file: UploadFile = File(...),number: int = Form(...)):
-    text =await extract_text_from_pdf(file)
+async def upload_file(file: UploadFile = File(...), number: int = Form(...)):
+    text = await extract_text_from_pdf(file)
     print(text)
+
+    # Генерируем краткое содержание
+    summary = await generate_summary(text)
+
     prompt = f""" [INST] <<SYS>>
     IMPORTANT:You MUST respond with ONLY valid JSON in the EXACT format specified below. 
     DO NOT include any additional text, explanations, or markdown formatting.
@@ -112,13 +138,19 @@ async def upload_file(file: UploadFile = File(...),number: int = Form(...)):
         )
         mcq_data = response.choices[0].message.content.strip()
         mcq_json = json.loads(mcq_data)
-        return {"message": "MCQs generated successfully", "data": mcq_json}
+
+        # Возвращаем и summary и вопросы
+        return {
+            "message": "MCQs generated successfully",
+            "summary": summary,
+            "data": mcq_json
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"AI error: {str(e)}")
-    
 
 
 GOOGLE_SCRIPT_URL = GOOGLE_SCRIPT_URL
+
 class Question(BaseModel):
     question: str
     options: List[str]
@@ -139,20 +171,13 @@ async def generate_form(quiz: QuizRequest):
         )
         
         response.raise_for_status()
-        
         return response.json()
         
     except requests.exceptions.RequestException as e:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Error communicating with Google Script: {str(e)}"
-        )
+        raise HTTPException(status_code=400, detail=f"Error communicating with Google Script: {str(e)}")
     except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Internal server error: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
 @app.get("/")
 def root():
     return {"message": "test"}
-
