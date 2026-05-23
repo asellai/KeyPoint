@@ -9,13 +9,10 @@ from typing import List
 from openai import OpenAI
 from env import API_KEY
 from env import GOOGLE_SCRIPT_URL
+from database import engine, Base
+from routers import users
 
 app = FastAPI()
-
-client = OpenAI(
-    base_url="https://openrouter.ai/api/v1",
-    api_key=API_KEY,  
-)
 
 app.add_middleware(
     CORSMiddleware,
@@ -25,7 +22,15 @@ app.add_middleware(
     allow_headers=["*"],  
 )
 
-model = "openrouter/free"
+Base.metadata.create_all(bind=engine)
+app.include_router(users.router)
+
+client = OpenAI(
+    base_url="https://openrouter.ai/api/v1",
+    api_key=API_KEY,  
+)
+
+model = "openai/gpt-oss-120b:free"
 
 class RequestData(BaseModel):
     prompt: str
@@ -62,12 +67,11 @@ async def extract_text_from_pdf(file: UploadFile):
 
 
 async def generate_summary(text: str) -> str:
-    """Генерирует краткое содержание документа"""
     summary_prompt = f"""Summarize the following text in 3-5 sentences. 
     The summary should be clear, concise and cover the main topics.
     Respond with ONLY the summary text, no additional formatting.
     
-    Text: {text[:3000]}"""  # берём первые 3000 символов чтобы не превышать лимит
+    Text: {text[:3000]}"""
 
     try:
         response = client.chat.completions.create(
@@ -89,7 +93,6 @@ async def upload_file(file: UploadFile = File(...), number: int = Form(...)):
     text = await extract_text_from_pdf(file)
     print(text)
 
-    # Генерируем краткое содержание
     summary = await generate_summary(text)
 
     prompt = f""" [INST] <<SYS>>
@@ -102,7 +105,7 @@ async def upload_file(file: UploadFile = File(...), number: int = Form(...)):
     2. Each question has exactly four options.
     3. The correct answer is one of the four options.
     4. Irrelevant or generic questions (e.g., about page numbers, authors) are NOT included.
-    5.Each question must have 4 options and one correct answer.
+    5. Each question must have 4 options and one correct answer.
     6. The correct answer must be from the given options.
 
     Required JSON format:
@@ -112,8 +115,7 @@ async def upload_file(file: UploadFile = File(...), number: int = Form(...)):
                 "question": "Your question here",
                 "options": ["Option 1", "Option 2", "Option 3", "Option 4"], 
                 "correct_answer": "Correct option" 
-            }},
-            // Repeat for {number} questions total
+            }}
         ]
     }}
     <</SYS>>
@@ -139,7 +141,6 @@ async def upload_file(file: UploadFile = File(...), number: int = Form(...)):
         mcq_data = response.choices[0].message.content.strip()
         mcq_json = json.loads(mcq_data)
 
-        # Возвращаем и summary и вопросы
         return {
             "message": "MCQs generated successfully",
             "summary": summary,
