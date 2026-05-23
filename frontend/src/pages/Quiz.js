@@ -25,12 +25,11 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CancelIcon from "@mui/icons-material/Cancel";
 
 export default function Quiz() {
-    const [darkMode, setDarkMode] = useState(true);
+  const [darkMode, setDarkMode] = useState(true);
   const url = process.env.REACT_APP_API_URL;
 
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [linkLoading, setLinkLoading] = useState(false);
   const [file, setFile] = useState(null);
   const [number, setNumber] = useState(null);
   const [dragActive, setDragActive] = useState(false);
@@ -41,11 +40,6 @@ export default function Quiz() {
 
   const [open, setOpen] = useState(false);
   const [editData, setEditData] = useState([]);
-
-  const [formLink, setFormLink] = useState(null);
-  const [editUrl, setEditUrl] = useState(null);
-  const [responseUrl, setResponseUrl] = useState(null);
-  const [email] = useState(null);
 
   const handleFileChange = (e) => setFile(e.target.files[0]);
 
@@ -84,8 +78,6 @@ export default function Quiz() {
     setSelectedAnswers({});
     setChecked(false);
     setScore(null);
-    setFormLink(null);
-    setEditUrl(null);
 
     const formData = new FormData();
     formData.append("file", file);
@@ -224,48 +216,6 @@ export default function Quiz() {
     ]);
   };
 
-  const handleGenerateQuiz = async () => {
-    setFormLink(null);
-    setEditUrl(null);
-    setLinkLoading(true);
-
-    const payload = {
-      questions: data.questions.map((q) => ({
-        question: q.question,
-        options: q.options,
-        correct_answer: q.correct_answer,
-      })),
-      shareEmail: email,
-    };
-
-    try {
-      const response = await fetch("http://127.0.0.1:8000/generate-form", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-
-      const result = await response.json();
-
-      if (result.success) {
-        toast.success("Quiz form generated successfully!");
-        setFormLink(result.form_url);
-        setEditUrl(result.edit_url);
-        setResponseUrl(result.response_url);
-      } else {
-        throw new Error(result.error || "Failed to generate form");
-      }
-    } catch (error) {
-      toast.error("Failed to generate quiz form. Please try again.");
-    } finally {
-      setLinkLoading(false);
-    }
-  };
-
   return (
     <Box
       sx={{
@@ -273,39 +223,33 @@ export default function Quiz() {
         display: "flex",
         flexDirection: "column",
         background: darkMode
-        ? "radial-gradient(circle at top left, rgba(99,102,241,0.35), transparent 35%), linear-gradient(135deg, #0f172a 0%, #1e1b4b 45%, #312e81 100%)"
-        : "linear-gradient(135deg, #d5c9dd 0%, #ede9fe 35%, #c4b5fd 100%)",
+          ? "radial-gradient(circle at top left, rgba(99,102,241,0.35), transparent 35%), linear-gradient(135deg, #0f172a 0%, #1e1b4b 45%, #312e81 100%)"
+          : "linear-gradient(135deg, #d5c9dd 0%, #ede9fe 35%, #c4b5fd 100%)",
       }}
     >
       <Toaster />
       <NavBar />
 
-<Box
-  sx={{
-    display: "flex",
-    justifyContent: "flex-end",
-    mb: 2,
-  }}
->
-  <Button
-    onClick={() => setDarkMode(!darkMode)}
-    sx={{
-      color: "white",
-      bgcolor: "rgba(255,255,255,0.1)",
-      borderRadius: "999px",
-      px: 3,
-      py: 1,
-      fontWeight: 700,
-      backdropFilter: "blur(10px)",
-      border: "1px solid rgba(255,255,255,0.15)",
-      "&:hover": {
-        bgcolor: "rgba(255,255,255,0.18)",
-      },
-    }}
-  >
-    {darkMode ? "☀️ Light Mode" : "🌙 Dark Mode"}
-  </Button>
-</Box>
+      <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2 }}>
+        <Button
+          onClick={() => setDarkMode(!darkMode)}
+          sx={{
+            color: "white",
+            bgcolor: "rgba(255,255,255,0.1)",
+            borderRadius: "999px",
+            px: 3,
+            py: 1,
+            fontWeight: 700,
+            backdropFilter: "blur(10px)",
+            border: "1px solid rgba(255,255,255,0.15)",
+            "&:hover": {
+              bgcolor: "rgba(255,255,255,0.18)",
+            },
+          }}
+        >
+          {darkMode ? "☀️ Light Mode" : "🌙 Dark Mode"}
+        </Button>
+      </Box>
 
       <Container maxWidth="lg" sx={{ flex: 1, py: { xs: 5, md: 8 } }}>
         <Box sx={{ textAlign: "center", mb: 5 }}>
@@ -346,8 +290,8 @@ export default function Quiz() {
               mx: "auto",
             }}
           >
-            Upload lecture slides or notes. AI will analyze your material and generate
-            multiple-choice questions for fast revision.
+            Upload lecture slides or notes. AI will analyze your material and
+            generate multiple-choice questions for fast revision.
           </Typography>
         </Box>
 
@@ -376,17 +320,16 @@ export default function Quiz() {
             Upload your study material
           </Typography>
 
-          <Typography
-            sx={{
-              color: "#64748b",
-              textAlign: "center",
-              mb: 3,
-            }}
-          >
+          <Typography sx={{ color: "#64748b", textAlign: "center", mb: 3 }}>
             Drag and drop a PDF file here, or click to select.
           </Typography>
 
-          <Box onDragEnter={handleDrag} onDragLeave={handleDrag} onDragOver={handleDrag} onDrop={handleDrop}>
+          <Box
+            onDragEnter={handleDrag}
+            onDragLeave={handleDrag}
+            onDragOver={handleDrag}
+            onDrop={handleDrop}
+          >
             <Paper
               elevation={0}
               onClick={() => document.getElementById("file-upload").click()}
@@ -396,7 +339,9 @@ export default function Quiz() {
                 textAlign: "center",
                 mb: 3,
                 borderRadius: "28px",
-                border: dragActive ? "2px dashed #6366f1" : "2px dashed #cbd5e1",
+                border: dragActive
+                  ? "2px dashed #6366f1"
+                  : "2px dashed #cbd5e1",
                 bgcolor: dragActive ? "rgba(99,102,241,0.08)" : "#f8fafc",
                 transition: "0.25s",
                 "&:hover": {
@@ -408,7 +353,9 @@ export default function Quiz() {
             >
               {file ? (
                 <>
-                  <CheckCircleIcon sx={{ fontSize: 54, color: "#22c55e", mb: 1 }} />
+                  <CheckCircleIcon
+                    sx={{ fontSize: 54, color: "#22c55e", mb: 1 }}
+                  />
                   <Typography sx={{ color: "#0f172a", fontWeight: 800 }}>
                     {file.name}
                   </Typography>
@@ -418,7 +365,9 @@ export default function Quiz() {
                 </>
               ) : (
                 <>
-                  <CloudUploadIcon sx={{ fontSize: 64, color: "#6366f1", mb: 1 }} />
+                  <CloudUploadIcon
+                    sx={{ fontSize: 64, color: "#6366f1", mb: 1 }}
+                  />
                   <Typography sx={{ color: "#0f172a", fontWeight: 800 }}>
                     Drag your PDF here or click to browse
                   </Typography>
@@ -478,150 +427,154 @@ export default function Quiz() {
           </Box>
 
           {!loading && data?.questions?.length > 0 && (
-  <Paper
-    elevation={0}
-    sx={{
-      mt: 4,
-      p: { xs: 3, md: 4 },
-      borderRadius: "28px",
-      bgcolor: "rgba(255,255,255,0.92)",
-      backdropFilter: "blur(20px)",
-      border: "1px solid rgba(255,255,255,0.35)",
-      boxShadow: "0 20px 60px rgba(0,0,0,0.15)",
-    }}
-  >
-    <Chip
-      label="AI Generated Summary"
-      sx={{
-        mb: 2,
-        bgcolor: "rgba(99,102,241,0.12)",
-        color: "#4f46e5",
-        fontWeight: 800,
-      }}
-    />
+            <Paper
+              elevation={0}
+              sx={{
+                mt: 4,
+                p: { xs: 3, md: 4 },
+                borderRadius: "28px",
+                bgcolor: "rgba(255,255,255,0.92)",
+                backdropFilter: "blur(20px)",
+                border: "1px solid rgba(255,255,255,0.35)",
+                boxShadow: "0 20px 60px rgba(0,0,0,0.15)",
+              }}
+            >
+              <Chip
+                label="AI Generated Summary"
+                sx={{
+                  mb: 2,
+                  bgcolor: "rgba(99,102,241,0.12)",
+                  color: "#4f46e5",
+                  fontWeight: 800,
+                }}
+              />
 
-    <Typography
-      sx={{
-        fontSize: "1.6rem",
-        fontWeight: 900,
-        color: "#0f172a",
-        mb: 1,
-      }}
-    >
-      Quick Summary
-    </Typography>
+              <Typography
+                sx={{
+                  fontSize: "1.6rem",
+                  fontWeight: 900,
+                  color: "#0f172a",
+                  mb: 1,
+                }}
+              >
+                Quick Summary
+              </Typography>
 
-    <Typography
-      sx={{
-        color: "#64748b",
-        mb: 3,
-      }}
-    >
-      AI analyzed your document and extracted the main concepts.
-    </Typography>
+              <Typography sx={{ color: "#64748b", mb: 3 }}>
+                AI analyzed your document and extracted the main concepts.
+              </Typography>
 
-    <Stack spacing={2}>
-      {[
-        "Machine learning uses data to train intelligent systems.",
-        "Neural networks imitate how the human brain processes information.",
-        "Deep learning is a subset of machine learning using multiple layers.",
-        "AI models improve accuracy through continuous training.",
-      ].map((item, index) => (
-        <Box
-          key={index}
-          sx={{
-            display: "flex",
-            alignItems: "flex-start",
-            gap: 2,
-            p: 2,
-            borderRadius: "18px",
-            bgcolor: "#f8fafc",
-            transition: "0.25s ease",
-            "&:hover": {
-              transform: "translateX(6px)",
-              bgcolor: "rgba(99,102,241,0.06)",
-            },
-          }}
-        >
-          <Box
-            sx={{
-              width: 10,
-              height: 10,
-              borderRadius: "50%",
-              mt: "10px",
-              bgcolor: "#6366f1",
-              flexShrink: 0,
-            }}
-          />
+              <Stack spacing={2}>
+                {[
+                  "Machine learning uses data to train intelligent systems.",
+                  "Neural networks imitate how the human brain processes information.",
+                  "Deep learning is a subset of machine learning using multiple layers.",
+                  "AI models improve accuracy through continuous training.",
+                ].map((item, index) => (
+                  <Box
+                    key={index}
+                    sx={{
+                      display: "flex",
+                      alignItems: "flex-start",
+                      gap: 2,
+                      p: 2,
+                      borderRadius: "18px",
+                      bgcolor: "#f8fafc",
+                      transition: "0.25s ease",
+                      "&:hover": {
+                        transform: "translateX(6px)",
+                        bgcolor: "rgba(99,102,241,0.06)",
+                      },
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        width: 10,
+                        height: 10,
+                        borderRadius: "50%",
+                        mt: "10px",
+                        bgcolor: "#6366f1",
+                        flexShrink: 0,
+                      }}
+                    />
 
-          <Typography
-            sx={{
-              color: "#0f172a",
-              fontWeight: 600,
-              lineHeight: 1.7,
-            }}
-          >
-            {item}
-          </Typography>
-        </Box>
-      ))}
-    </Stack>
-  </Paper>
-)}
-     {loading && (
-            <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", mt: 4 }}>
-             <Box
-  sx={{
-    position: "relative",
-    width: 90,
-    height: 90,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-  }}
->
-  <Box
-    sx={{
-      position: "absolute",
-      width: 90,
-      height: 90,
-      borderRadius: "50%",
-      background:
-        "conic-gradient(from 0deg, #6366f1, #8b5cf6, #3b82f6, #6366f1)",
-      animation: "spin 1.2s linear infinite",
-      filter: "blur(1px)",
-      "@keyframes spin": {
-        from: {
-          transform: "rotate(0deg)",
-        },
-        to: {
-          transform: "rotate(360deg)",
-        },
-      },
-    }}
-  />
+                    <Typography
+                      sx={{
+                        color: "#0f172a",
+                        fontWeight: 600,
+                        lineHeight: 1.7,
+                      }}
+                    >
+                      {item}
+                    </Typography>
+                  </Box>
+                ))}
+              </Stack>
+            </Paper>
+          )}
 
-  <Box
-    sx={{
-      width: 68,
-      height: 68,
-      borderRadius: "50%",
-      bgcolor: "white",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      zIndex: 2,
-      boxShadow: "0 10px 30px rgba(99,102,241,0.25)",
-    }}
-  >
-    <CloudUploadIcon
-      sx={{
-        color: "#6366f1",
-        fontSize: 34,
-      }}
-    />
-  </Box>
-</Box>
+          {loading && (
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                mt: 4,
+              }}
+            >
+              <Box
+                sx={{
+                  position: "relative",
+                  width: 90,
+                  height: 90,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Box
+                  sx={{
+                    position: "absolute",
+                    width: 90,
+                    height: 90,
+                    borderRadius: "50%",
+                    background:
+                      "conic-gradient(from 0deg, #6366f1, #8b5cf6, #3b82f6, #6366f1)",
+                    animation: "spin 1.2s linear infinite",
+                    filter: "blur(1px)",
+                    "@keyframes spin": {
+                      from: {
+                        transform: "rotate(0deg)",
+                      },
+                      to: {
+                        transform: "rotate(360deg)",
+                      },
+                    },
+                  }}
+                />
+
+                <Box
+                  sx={{
+                    width: 68,
+                    height: 68,
+                    borderRadius: "50%",
+                    bgcolor: "white",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    zIndex: 2,
+                    boxShadow: "0 10px 30px rgba(99,102,241,0.25)",
+                  }}
+                >
+                  <CloudUploadIcon
+                    sx={{
+                      color: "#6366f1",
+                      fontSize: 34,
+                    }}
+                  />
+                </Box>
+              </Box>
+
               <Typography sx={{ mt: 2, color: "#475569", fontWeight: 700 }}>
                 Generating questions...
               </Typography>
@@ -648,32 +601,33 @@ export default function Quiz() {
                 }}
               >
                 <Typography
-  sx={{
-    fontSize: { xs: "2.2rem", md: "3.2rem" },
-    fontWeight: 900,
-    background:
-      score === data.questions.length
-        ? "linear-gradient(135deg, #22c55e, #16a34a)"
-        : score >= data.questions.length / 2
-        ? "linear-gradient(135deg, #6366f1, #8b5cf6)"
-        : "linear-gradient(135deg, #ef4444, #dc2626)",
-    WebkitBackgroundClip: "text",
-    WebkitTextFillColor: "transparent",
-    animation: "popIn 0.5s ease",
-    "@keyframes popIn": {
-      from: {
-        transform: "scale(0.7)",
-        opacity: 0,
-      },
-      to: {
-        transform: "scale(1)",
-        opacity: 1,
-      },
-    },
-  }}
->
+                  sx={{
+                    fontSize: { xs: "2.2rem", md: "3.2rem" },
+                    fontWeight: 900,
+                    background:
+                      score === data.questions.length
+                        ? "linear-gradient(135deg, #22c55e, #16a34a)"
+                        : score >= data.questions.length / 2
+                        ? "linear-gradient(135deg, #6366f1, #8b5cf6)"
+                        : "linear-gradient(135deg, #ef4444, #dc2626)",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                    animation: "popIn 0.5s ease",
+                    "@keyframes popIn": {
+                      from: {
+                        transform: "scale(0.7)",
+                        opacity: 0,
+                      },
+                      to: {
+                        transform: "scale(1)",
+                        opacity: 1,
+                      },
+                    },
+                  }}
+                >
                   Your Score: {score} / {data.questions.length}
                 </Typography>
+
                 <Typography color="text.secondary">
                   {score === data.questions.length
                     ? "🎉 Perfect!"
@@ -696,7 +650,10 @@ export default function Quiz() {
                   boxShadow: "0 20px 50px rgba(0,0,0,0.12)",
                 }}
               >
-                <Typography variant="h6" sx={{ mb: 2, fontWeight: 900, color: "#0f172a" }}>
+                <Typography
+                  variant="h6"
+                  sx={{ mb: 2, fontWeight: 900, color: "#0f172a" }}
+                >
                   {qIndex + 1}. {question.question}
                 </Typography>
 
@@ -712,7 +669,11 @@ export default function Quiz() {
                       mb: 1.2,
                       borderRadius: "16px",
                       transition: "0.2s",
-                      ...getOptionStyle(qIndex, option, question.correct_answer),
+                      ...getOptionStyle(
+                        qIndex,
+                        option,
+                        question.correct_answer
+                      ),
                       "&:hover": !checked
                         ? {
                             backgroundColor: "rgba(99,102,241,0.08)",
@@ -739,13 +700,27 @@ export default function Quiz() {
               </Paper>
             ))}
 
-            <Stack direction="row" spacing={2} justifyContent="center" flexWrap="wrap" sx={{ mb: 4 }}>
+            <Stack
+              direction="row"
+              spacing={2}
+              justifyContent="center"
+              flexWrap="wrap"
+              sx={{ mb: 4 }}
+            >
               {!checked ? (
                 <>
-                  <Button variant="contained" color="success" onClick={handleCheck}>
+                  <Button
+                    variant="contained"
+                    color="success"
+                    onClick={handleCheck}
+                  >
                     Check Answers
                   </Button>
-                  <Button variant="contained" color="warning" onClick={handleEdit}>
+                  <Button
+                    variant="contained"
+                    color="warning"
+                    onClick={handleEdit}
+                  >
                     Edit
                   </Button>
                 </>
@@ -754,85 +729,16 @@ export default function Quiz() {
                   <Button variant="contained" onClick={handleRetry}>
                     Try Again
                   </Button>
-                  <Button variant="contained" color="warning" onClick={handleEdit}>
+                  <Button
+                    variant="contained"
+                    color="warning"
+                    onClick={handleEdit}
+                  >
                     Edit
                   </Button>
                 </>
               )}
-
-              {!linkLoading && !formLink && (
-                <Button variant="contained" onClick={handleGenerateQuiz}>
-                  Generate Quiz Link
-                </Button>
-              )}
             </Stack>
-
-            {linkLoading && (
-              <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", mb: 3 }}>
-                <div className="w-12 h-12 border-4 border-gray-300 border-t-white rounded-full animate-spin"></div>
-                <Typography sx={{ mt: 1, color: "#fff" }}>Generating link...</Typography>
-              </Box>
-            )}
-
-            {formLink && (
-              <Box
-                sx={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 2,
-                  p: 2,
-                  bgcolor: "rgba(255,255,255,0.92)",
-                  borderRadius: "20px",
-                  mb: 4,
-                }}
-              >
-                {[
-                  { label: "Form", url: formLink, msg: "Form link copied!" },
-                  { label: "Edit", url: editUrl, msg: "Edit link copied!" },
-                  { label: "Responses", url: responseUrl, msg: "Responses link copied!" },
-                ].map(({ label, url: u, msg }) => (
-                  <Box
-                    key={label}
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      bgcolor: "white",
-                      p: 1.5,
-                      borderRadius: "14px",
-                      border: "1px solid #e2e8f0",
-                    }}
-                  >
-                    <a
-                      href={u}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{
-                        color: "#4f46e5",
-                        textDecoration: "none",
-                        maxWidth: "70%",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      {label}
-                    </a>
-
-                    <Button
-                      variant="contained"
-                      size="small"
-                      onClick={() => {
-                        navigator.clipboard.writeText(u);
-                        toast.success(msg);
-                      }}
-                    >
-                      Copy
-                    </Button>
-                  </Box>
-                ))}
-              </Box>
-            )}
           </Box>
         )}
       </Container>
@@ -864,13 +770,20 @@ export default function Quiz() {
           {editData.map((question, qIndex) => (
             <Box key={qIndex} sx={{ mb: 3 }}>
               <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
-                <Typography variant="h6" color="primary" fontWeight="bold" sx={{ flex: 1 }}>
+                <Typography
+                  variant="h6"
+                  color="primary"
+                  fontWeight="bold"
+                  sx={{ flex: 1 }}
+                >
                   Question {qIndex + 1}
                 </Typography>
 
                 <IconButton
                   color="error"
-                  onClick={() => setEditData(editData.filter((_, i) => i !== qIndex))}
+                  onClick={() =>
+                    setEditData(editData.filter((_, i) => i !== qIndex))
+                  }
                 >
                   <DeleteIcon />
                 </IconButton>
@@ -880,7 +793,9 @@ export default function Quiz() {
                 label={`Question ${qIndex + 1}`}
                 fullWidth
                 value={question.question}
-                onChange={(e) => handleChange(qIndex, "question", e.target.value)}
+                onChange={(e) =>
+                  handleChange(qIndex, "question", e.target.value)
+                }
                 sx={{ mb: 2 }}
               />
 
@@ -890,7 +805,9 @@ export default function Quiz() {
                   label={`Option ${oIndex + 1}`}
                   fullWidth
                   value={option}
-                  onChange={(e) => handleOptionChange(qIndex, oIndex, e.target.value)}
+                  onChange={(e) =>
+                    handleOptionChange(qIndex, oIndex, e.target.value)
+                  }
                   sx={{ mb: 1 }}
                 />
               ))}
@@ -899,7 +816,9 @@ export default function Quiz() {
                 label="Correct Answer"
                 fullWidth
                 value={question.correct_answer}
-                onChange={(e) => handleChange(qIndex, "correct_answer", e.target.value)}
+                onChange={(e) =>
+                  handleChange(qIndex, "correct_answer", e.target.value)
+                }
                 sx={{
                   mt: 1,
                   border: question.options.includes(question.correct_answer)
