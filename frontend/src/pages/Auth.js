@@ -160,8 +160,15 @@ export default function Auth() {
           }}
           sx={{
             mb: 2,
-            "& .MuiOutlinedInput-root": { borderRadius: "18px", background: "rgba(255,255,255,0.08)", color: "#fff" },
-            "& .MuiInputBase-input::placeholder": { color: "#cfc9ff" },
+            "& .MuiOutlinedInput-root": {
+              borderRadius: "18px",
+              background: "rgba(255,255,255,0.08)",
+              color: "#fff",
+            },
+            "& input": {
+              color: "#fff",
+              backgroundColor: "transparent",
+            },
           }}
         />
 
@@ -189,8 +196,15 @@ export default function Auth() {
           }}
           sx={{
             mb: 3,
-            "& .MuiOutlinedInput-root": { borderRadius: "18px", background: "rgba(255,255,255,0.08)", color: "#fff" },
-            "& .MuiInputBase-input::placeholder": { color: "#cfc9ff" },
+            "& .MuiOutlinedInput-root": {
+              borderRadius: "18px",
+              background: "rgba(255,255,255,0.08)",
+              color: "#fff",
+            },
+            "& input": {
+              color: "#fff",
+              backgroundColor: "transparent",
+            },
           }}
         />
 
