@@ -10,3 +10,4 @@ node_modules/
 .DS_Store
 *.log
 db.json *.code-workspace
+*.db
