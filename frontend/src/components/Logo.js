@@ -27,7 +27,7 @@ export default function QuizifyLogo() {
       <img src={LogoTest} height={60} width={60}/>
       <div className="flex flex-col">
         <span className="font-medium text-xl text-white">
-          Quizify
+          KeyPoint
         </span>
         <span className="text-xs text-blue-100 font-medium -mt-1">
           Quiz Smarter

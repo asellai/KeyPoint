@@ -1,7 +1,7 @@
 import React from "react";
 import { AppBar, Box, Toolbar, Button, Typography } from "@mui/material";
 import { useNavigate } from "react-router-dom";
-import QuizifyLogo from "./Logo";
+import KeyPointLogo from "./Logo";
 
 export default function NavBar() {
   const navigate = useNavigate();
@@ -42,7 +42,7 @@ export default function NavBar() {
             "&:hover": { transform: "scale(1.03)" },
           }}
         >
-          <QuizifyLogo />
+          <KeyPointLogo />
         </Box>
 
         <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 1, md: 2 } }}>
