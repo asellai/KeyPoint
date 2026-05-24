@@ -9,4 +9,4 @@ pymupdf
 openai
 requests
 pydantic[email]
-slowapi
+slowapipython-multipart
