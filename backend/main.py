@@ -27,7 +27,7 @@ app.add_middleware(
     CORSMiddleware,
 allow_origins=[
     "http://localhost:3000",
-    "https://feisty-elegance.up.railway.app",
+    "https://feisty-elegance-production-26c7.up.railway.app",
     os.getenv("FRONTEND_URL", "http://localhost:3000")
 ],
     allow_credentials=True,
