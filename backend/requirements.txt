@@ -8,5 +8,5 @@ python-jose[cryptography]
 pymupdf
 openai
 requests
-pydantic
+pydantic[email]
 slowapi
