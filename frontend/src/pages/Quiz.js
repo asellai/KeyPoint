@@ -26,7 +26,7 @@ import CancelIcon from "@mui/icons-material/Cancel";
 
 export default function Quiz() {
   const [darkMode, setDarkMode] = useState(true);
-  const url = "http://127.0.0.1:8000";
+  const url = const url = process.env.REACT_APP_API_URL || "http://127.0.0.1:8000";
 
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
