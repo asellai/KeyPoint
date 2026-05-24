@@ -1,25 +1,37 @@
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+import os
 import json
 import re
-import fitz  
-import requests
-from typing import List
+import fitz
 from openai import OpenAI
-from env import API_KEY
-from env import GOOGLE_SCRIPT_URL
+from dotenv import load_dotenv
 from database import engine, Base
 from routers import users
 
+load_dotenv()
+
+API_KEY = os.getenv("API_KEY")
+
 app = FastAPI()
+
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  
+    allow_origins=[
+        "http://localhost:3000",
+        os.getenv("FRONTEND_URL", "http://localhost:3000")
+    ],
     allow_credentials=True,
-    allow_methods=["*"],  
-    allow_headers=["*"],  
+    allow_methods=["GET", "POST", "PUT", "DELETE"],
+    allow_headers=["Authorization", "Content-Type"],
 )
 
 Base.metadata.create_all(bind=engine)
@@ -27,14 +39,13 @@ app.include_router(users.router)
 
 client = OpenAI(
     base_url="https://openrouter.ai/api/v1",
-    api_key=API_KEY,  
+    api_key=API_KEY,
 )
 
 model = "openai/gpt-oss-120b:free"
 
 class RequestData(BaseModel):
     prompt: str
-
 
 def clean_text(text):
     text = re.sub(r'\s+', ' ', text)
@@ -56,15 +67,16 @@ def format_text(text):
 
 async def extract_text_from_pdf(file: UploadFile):
     file_content = await file.read()
+    if len(file_content) > 10 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="File too large. Max 10MB.")
     try:
         doc = fitz.open(stream=file_content, filetype="pdf")
         text = "\n".join([page.get_text("text") for page in doc])
         formatted_text = clean_text(text)
-        formatted_text = format_text(formatted_text) 
+        formatted_text = format_text(formatted_text)
         return formatted_text
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error extracting text: {str(e)}")
-
 
 async def generate_summary(text: str) -> str:
     summary_prompt = f"""Summarize the following text in 3-5 sentences. 
@@ -72,7 +84,6 @@ async def generate_summary(text: str) -> str:
     Respond with ONLY the summary text, no additional formatting.
     
     Text: {text[:3000]}"""
-
     try:
         response = client.chat.completions.create(
             model=model,
@@ -87,11 +98,10 @@ async def generate_summary(text: str) -> str:
     except Exception:
         return "Summary not available."
 
-
 @app.post("/upload")
-async def upload_file(file: UploadFile = File(...), number: int = Form(...)):
+@limiter.limit("5/minute")
+async def upload_file(request: Request, file: UploadFile = File(...), number: int = Form(...)):
     text = await extract_text_from_pdf(file)
-    print(text)
 
     summary = await generate_summary(text)
 
@@ -104,7 +114,7 @@ async def upload_file(file: UploadFile = File(...), number: int = Form(...)):
     1. Each question is directly based on facts from the text.
     2. Each question has exactly four options.
     3. The correct answer is one of the four options.
-    4. Irrelevant or generic questions (e.g., about page numbers, authors) are NOT included.
+    4. Irrelevant or generic questions are NOT included.
     5. Each question must have 4 options and one correct answer.
     6. The correct answer must be from the given options.
 
@@ -149,36 +159,7 @@ async def upload_file(file: UploadFile = File(...), number: int = Form(...)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"AI error: {str(e)}")
 
-
-GOOGLE_SCRIPT_URL = GOOGLE_SCRIPT_URL
-
-class Question(BaseModel):
-    question: str
-    options: List[str]
-    correct_answer: str
-
-class QuizRequest(BaseModel):
-    questions: List[Question]
-
-@app.post("/generate-form")
-async def generate_form(quiz: QuizRequest):
-    try:
-        payload = {"questions": [q.dict() for q in quiz.questions]}
-        
-        response = requests.post(
-            GOOGLE_SCRIPT_URL,
-            json=payload,
-            headers={'Content-Type': 'application/json'}
-        )
-        
-        response.raise_for_status()
-        return response.json()
-        
-    except requests.exceptions.RequestException as e:
-        raise HTTPException(status_code=400, detail=f"Error communicating with Google Script: {str(e)}")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
-
 @app.get("/")
-def root():
-    return {"message": "test"}
+@limiter.limit("10/minute")
+async def root(request: Request):
+    return {"message": "KeyPoint API"}
