@@ -1,4 +1,12 @@
 fastapi
-redis
-types-redis
 uvicorn
+sqlalchemy
+psycopg2-binary
+python-dotenv
+passlib[bcrypt]
+python-jose[cryptography]
+pymupdf
+openai
+requests
+pydantic
+slowapi
