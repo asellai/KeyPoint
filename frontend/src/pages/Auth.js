@@ -17,7 +17,7 @@ import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import { useNavigate } from "react-router-dom";
 import { toast, Toaster } from "react-hot-toast";
 
-const URL = "http://127.0.0.1:8000";
+const URL = process.env.REACT_APP_API_URL || "http://127.0.0.1:8000";
 
 export default function Auth() {
   const navigate = useNavigate();
